@@ -1,5 +1,5 @@
 import express, { json } from "express";
-import { MongoClient, ObjectId } from "mongodb";
+import { MongoClient} from "mongodb";
 import cors from "cors";
 import Joi from "joi";
 import bcrypt from "bcrypt";
@@ -98,7 +98,6 @@ mongoClient.connect()
     };
 
     await db.collection("sessoes").insertOne(sessao);
-    console.log(sessao);
 
     return res.status(200).send({ token });
   }catch{
@@ -133,21 +132,45 @@ app.post("/transactions",async(req,res)=>{
     }  
     try{
        const newtransacao = {
-    valor: parseFloat(transacao.value).toFixed(2),
-    type: transacao.type,
-    description: transacao.description,
+      valor: parseFloat(transacao.value).toFixed(2),
+      type: transacao.type,
+      description: transacao.description,
+      userID: sessao.userID
     };
 
-    await db.collection("transicao").insertOne(newtransacao);
+    await db.collection("transacao").insertOne(newtransacao);
     
-    res.status(201).send("transição adicionada com sucesso!" );
+    res.status(201).send("transação adicionada com sucesso!" );
     }
    catch{
     console.error(error);
     res.status(500).send("Erro interno do servidor. Tente novamente mais tarde.");
    }
   })
- 
+
+  app.get("/transactions", async (req, res) => {
+    const { authorization } = req.headers;
+    const token = authorization?.replace("Bearer", "").trim();
+    if(!token){
+      return res.sendStatus(401); 
+    }
+    const sessao=await db.collection("sessoes").findOne({token});
+    console.log(sessao.userID);
+  if(!sessao){
+    return res.sendStatus(401)
+  }
+    try {
+      const transacoes = await db.collection("transacao").find({ userID: sessao.userID }).sort({ _id: -1 }).toArray();
+      if (transacoes.length > 0) {
+        return res.status(200).send(transacoes);
+    }
+       return res.status(404).send("nao existe nenhuma transação");
+      
+    } catch (error) {
+        console.log( error);
+        return res.status(500).send("Erro interno do servidor. Tente novamente mais tarde.");
+    }
+});
 
   
 app.listen(process.env.PORT,()=>{
