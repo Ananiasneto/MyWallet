@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { db } from "./database.js";
-import { userLoginSchema, userSchema } from "./schemas.js";
+import { db } from "../database.js";
+import { userLoginSchema, userSchema } from "../schemas/usuarios-schemas.js";
 
 
 

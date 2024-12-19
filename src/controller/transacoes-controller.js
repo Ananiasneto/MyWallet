@@ -1,29 +1,19 @@
 import { ObjectId } from "mongodb";
-import { db } from "./database.js";
-import { transacaoSchema } from "./schemas.js";
+import { db } from "../database.js";
+import { transacaoSchema } from "../schemas/transacoes-schema.js";
 
 export async function postTransacao(req,res){
     const transacao=req.body;
     const { authorization } = req.headers;
     const token = authorization?.replace("Bearer", "").trim();
     if(!token){
-      return res.status(401).send("token invalido"); 
+    return res.sendStatus(401); 
     }
-  const sessao=await db.collection("sessoes").findOne({token});
-  if(!sessao){
-    return res.status(401).send("sessão invalida"); 
+    const sessao=await db.collection("sessoes").findOne({token});
+    if(!sessao){
+      return res.status(401).send("sessão invalida"); 
   }
-  const { error } = transacaoSchema.validate(transacao, { abortEarly: false });
-  if (error) {
-      return res.status(422).send({
-          details: error.details.map((detail) => detail.message),
-      });
-  }
-    
-    
-    if (transacao.type.toUpperCase() !=="DEPOSIT" && transacao.type.toUpperCase() !== "WITHDRAW") {
-      return res.status(422).send("Tipo de transação invalida");
-    }  
+   
     try{
        const newtransacao = {
       valor: parseFloat(transacao.value).toFixed(2),
@@ -98,18 +88,6 @@ export async function getTransacao(req,res) {
    if(!sessao){
    return res.sendStatus(401)
    }
- 
-   const { error } = transacaoSchema.validate(transacao, { abortEarly: false });
-   if (error) {
-       return res.status(422).send({
-           details: error.details.map((detail) => detail.message),
-       });
-   }
-     
-     
-     if (transacao.type.toUpperCase() !=="DEPOSIT" && transacao.type.toUpperCase() !== "WITHDRAW") {
-       return res.status(422).send("Tipo de transação invalida");
-     }  
      if (!id) {
        return res.status(400).send("ID da transação é obrigatório");
      }
