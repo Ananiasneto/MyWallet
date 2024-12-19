@@ -243,6 +243,43 @@ app.put("/transactions/:id", async (req, res) => {
     }
 })
 
+app.delete("/transactions/:id", async (req, res) => {
+  const { id } = req.params;
+  const { authorization } = req.headers;
+  const token = authorization?.replace("Bearer", "").trim();
+
+  if (!token) {
+    return res.sendStatus(401); 
+  }
+
+  const sessao = await db.collection("sessoes").findOne({ token });
+  
+  if (!sessao) {
+    return res.sendStatus(401);
+  }
+
+  if (!id) {
+    return res.status(400).send("ID da transação é obrigatório");
+  }
+
+  try {
+    
+    const result = await db.collection("transacao").deleteOne({
+      _id: new ObjectId(id),
+      userID: sessao.userID,
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).send("Transação não encontrada");
+    }
+
+    return res.status(204).send();
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send("Erro ao deletar a transação");
+  }
+});
+
 
 app.listen(process.env.PORT,()=>{
     console.log(`rodando liso na porta ${process.env.PORT}`)
